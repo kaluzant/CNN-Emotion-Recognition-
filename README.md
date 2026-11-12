@@ -1,9 +1,9 @@
 # Facial expression CNN
 
-This project trains a convolutional neural network on the image-folder dataset in
+This project trains a convolutional neural network (CNN) on the image-folder dataset in
 `data/train` and evaluates it on `data/validation`. Each split must contain one
 subfolder per expression class. Images are converted to 48×48 grayscale and
-scaled to `[0, 1]`; the class names are read from the training subfolders.
+scaled to `[0, 1]` (by dividing by 255); the class names are read from the training subfolders.
 
 ## Setup
 
@@ -21,7 +21,15 @@ python3 train.py
 
 In an interactive terminal, the script asks for the epoch count, batch size, and
 learning rate. Press Enter at a prompt to use its displayed default (30, 64, and
-0.001). It automatically uses CUDA when available, applies class-weighted loss
+0.001).
+
+__Epoch count__: this is how many pass throughs. More passthroughs give the model more chances to learn, but obviously takes longer and can lead to overfitting which we do not want as the second part of the project we want it to detect live facial expressions.
+
+__Batch size__: larger batches use more memory and smaller batches use less memory and provide noisier updates which can help with generalisation.
+
+__Learning rate__: this is the $\eta$ variable in gradient descent. Higher learning rate can speed up learning but if it's too high the training may become unstabel and miss a good solution. Lower rate is steadier but obviously may take longer to learn.
+
+It automatically uses CUDA when available, applies class-weighted loss
 for the imbalanced classes, and saves the checkpoint with the best validation
 balanced accuracy to `models/fer_cnn.pth`.
 
