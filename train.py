@@ -1,5 +1,6 @@
 import argparse
 import random
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -148,6 +149,31 @@ def evaluate(
     return total_loss / len(loader.dataset), accuracy.item(), balanced_accuracy.item()
 # this outputs the accuracy and then balanced accuracy because different number of images per emotion
 
+
+def prompt_training_settings(args: argparse.Namespace) -> None:
+    settings = (
+        ("epochs", "Epochs", int),
+        ("batch_size", "Batch size", int),
+        ("learning_rate", "Learning rate", float),
+    )
+    for attribute, label, value_type in settings:
+        default = getattr(args, attribute)
+        while True:
+            response = input(f"{label} [{default}]: ").strip()
+            if not response:
+                break
+            try:
+                value = value_type(response)
+            except ValueError:
+                print(f"Please enter a valid {label.lower()}.")
+                continue
+            if value <= 0:
+                print(f"{label} must be greater than zero.")
+                continue
+            setattr(args, attribute, value)
+            break
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Train a CNN to classify facial expressions from image folders."
@@ -163,6 +189,9 @@ def main() -> None:
 
     if args.epochs < 1 or args.batch_size < 1 or args.learning_rate <= 0:
         parser.error("epochs and batch-size must be positive; learning-rate must be > 0")
+
+    if sys.stdin.isatty():
+        prompt_training_settings(args)
 
     random.seed(args.seed)
     np.random.seed(args.seed)

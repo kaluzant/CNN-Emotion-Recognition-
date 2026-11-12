@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Facial expression CNN
 
 This project trains a convolutional neural network on the image-folder dataset in
@@ -20,16 +19,21 @@ python3 -m pip install -r requirements.txt
 python3 train.py
 ```
 
-The default run trains for 30 epochs with batches of 64. It automatically uses
-CUDA when available, applies class-weighted loss for the imbalanced classes, and
-saves the checkpoint with the best validation balanced accuracy to
-`models/fer_cnn.pth`.
+In an interactive terminal, the script asks for the epoch count, batch size, and
+learning rate. Press Enter at a prompt to use its displayed default (30, 64, and
+0.001). It automatically uses CUDA when available, applies class-weighted loss
+for the imbalanced classes, and saves the checkpoint with the best validation
+balanced accuracy to `models/fer_cnn.pth`.
 
-To adjust the run:
+To set different defaults from the command line:
 
 ```bash
 python3 train.py --epochs 40 --batch-size 32 --learning-rate 0.0005
 ```
+
+In an interactive terminal, these values are shown as the prompt defaults. When
+standard input is not interactive, supplied command-line values are used
+without prompting.
 
 The checkpoint contains the model weights, ordered class names, and 48×48 input
 size. The later camera application can use these values to keep preprocessing
@@ -52,6 +56,3 @@ probabilities = model.predict_proba(images)  # shape: (batch_size, number_of_cla
 Provide `images` as grayscale `[0, 1]` tensors with shape
 `(batch_size, 1, 48, 48)`, using the same preprocessing as the training dataset.
 Each row contains probabilities that sum to 1.
-=======
-# CNN-Emotion-Recognition-
->>>>>>> origin/main
