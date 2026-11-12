@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Facial expression CNN
 
 This project trains a convolutional neural network on the image-folder dataset in
@@ -51,3 +52,6 @@ probabilities = model.predict_proba(images)  # shape: (batch_size, number_of_cla
 Provide `images` as grayscale `[0, 1]` tensors with shape
 `(batch_size, 1, 48, 48)`, using the same preprocessing as the training dataset.
 Each row contains probabilities that sum to 1.
+=======
+# CNN-Emotion-Recognition-
+>>>>>>> origin/main
