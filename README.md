@@ -27,7 +27,7 @@ __Epoch count__: this is how many pass throughs. More passthroughs give the mode
 
 __Batch size__: larger batches use more memory and smaller batches use less memory and provide noisier updates which can help with generalisation.
 
-__Learning rate__: this is the $\eta$ variable in gradient descent. Higher learning rate can speed up learning but if it's too high the training may become unstabel and miss a good solution. Lower rate is steadier but obviously may take longer to learn.
+__Learning rate__: this is the $\eta$ variable in gradient descent. Higher learning rate can speed up learning but if it's too high the training may become unstable and miss a good solution. Lower rate is steadier but obviously may take longer to learn.
 
 It automatically uses CUDA when available, applies class-weighted loss
 for the imbalanced classes, and saves the checkpoint with the best validation
