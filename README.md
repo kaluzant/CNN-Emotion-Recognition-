@@ -56,9 +56,11 @@ application:
 python3 camera.py
 ```
 
-The app draws a box around each detected face and displays its predicted emotion
-and confidence. Press `q` in the camera window to quit. To select a different
-camera or checkpoint, use `python3 camera.py --camera 1` or
+The app draws a box around each detected face, displays its predicted emotion
+and confidence, and overlays a Grad-CAM heatmap showing regions that influenced
+the prediction. The heatmap is an approximate explanation, not a direct view of
+individual model weights. Press `q` in the camera window to quit. To select a
+different camera or checkpoint, use `python3 camera.py --camera 1` or
 `python3 camera.py --checkpoint path/to/fer_cnn.pth`.
 
 ## Inference probabilities

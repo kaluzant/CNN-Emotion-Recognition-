@@ -4,6 +4,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import torch
+import torch.nn.functional as functional
 from PIL import Image
 
 from train import EmotionCNN, IMAGE_SIZE
@@ -41,6 +42,57 @@ def preprocess_face(grayscale_face: np.ndarray) -> torch.Tensor:
     return torch.from_numpy(pixels).unsqueeze(0).unsqueeze(0)
 
 
+class GradCAM:
+    def __init__(self, model: EmotionCNN):
+        self.model = model
+        convolution_layers = [
+            layer
+            for layer in model.features.modules()
+            if isinstance(layer, torch.nn.Conv2d)
+        ]
+        if not convolution_layers:
+            raise ValueError("The model has no convolutional layer for Grad-CAM.")
+        self.activation: torch.Tensor | None = None
+        self.hook = convolution_layers[-1].register_forward_hook(self._capture)
+
+    def _capture(
+        self,
+        _module: torch.nn.Module,
+        _inputs: tuple[torch.Tensor, ...],
+        output: torch.Tensor,
+    ) -> None:
+        self.activation = output
+
+    @torch.enable_grad()
+    def predict(self, images: torch.Tensor) -> tuple[torch.Tensor, np.ndarray]:
+        self.activation = None
+        logits = self.model(images)
+        if self.activation is None:
+            raise RuntimeError("Grad-CAM did not capture the model features.")
+
+        class_index = int(logits[0].argmax().item())
+        gradients = torch.autograd.grad(
+            logits[0, class_index], self.activation
+        )[0]
+        weights = gradients.mean(dim=(2, 3), keepdim=True)
+        heatmap = torch.relu((weights * self.activation).sum(dim=1, keepdim=True))
+        heatmap = functional.interpolate(
+            heatmap,
+            size=(IMAGE_SIZE, IMAGE_SIZE),
+            mode="bilinear",
+            align_corners=False,
+        )[0, 0]
+        heatmap_min = heatmap.min()
+        heatmap = (heatmap - heatmap_min) / (
+            heatmap.max() - heatmap_min
+        ).clamp_min(1e-8)
+        probabilities = torch.softmax(logits[0], dim=0).detach()
+        return probabilities, heatmap.detach().cpu().numpy()
+
+    def close(self) -> None:
+        self.hook.remove()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Show live facial emotion predictions from your webcam."
@@ -62,9 +114,11 @@ def main() -> None:
     if face_detector.empty():
         raise RuntimeError("Could not load OpenCV's frontal-face detector.")
 
+    grad_cam = GradCAM(model)
     camera = cv2.VideoCapture(args.camera)
     if not camera.isOpened():
         camera.release()
+        grad_cam.close()
         raise RuntimeError(
             f"Could not open webcam {args.camera}. Check the camera index and permissions."
         )
@@ -97,12 +151,21 @@ def main() -> None:
 
             for x, y, width, height in faces:
                 face = preprocess_face(grayscale[y : y + height, x : x + width])
-                with torch.inference_mode():
-                    probabilities = model.predict_proba(face.to(device))[0]
+                probabilities, heatmap = grad_cam.predict(face.to(device))
                 class_index = int(probabilities.argmax().item())
                 emotion = classes[class_index]
                 confidence = probabilities[class_index].item()
 
+                heatmap_image = cv2.applyColorMap(
+                    np.uint8(heatmap * 255), cv2.COLORMAP_JET
+                )
+                face_region = frame[y : y + height, x : x + width]
+                heatmap_image = cv2.resize(
+                    heatmap_image, (width, height), interpolation=cv2.INTER_LINEAR
+                )
+                frame[y : y + height, x : x + width] = cv2.addWeighted(
+                    face_region, 0.55, heatmap_image, 0.45, 0
+                )
                 cv2.rectangle(
                     frame, (x, y), (x + width, y + height), (0, 255, 0), 2
                 )
@@ -122,6 +185,7 @@ def main() -> None:
     finally:
         camera.release()
         cv2.destroyAllWindows()
+        grad_cam.close()
 
 
 if __name__ == "__main__":
