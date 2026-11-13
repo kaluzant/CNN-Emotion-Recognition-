@@ -47,6 +47,20 @@ The checkpoint contains the model weights, ordered class names, and 48×48 input
 size. The later camera application can use these values to keep preprocessing
 and predicted labels consistent with training.
 
+## Live camera
+
+After training has finished and saved `models/fer_cnn.pth`, start the webcam
+application:
+
+```bash
+python3 camera.py
+```
+
+The app draws a box around each detected face and displays its predicted emotion
+and confidence. Press `q` in the camera window to quit. To select a different
+camera or checkpoint, use `python3 camera.py --camera 1` or
+`python3 camera.py --checkpoint path/to/fer_cnn.pth`.
+
 ## Inference probabilities
 
 `EmotionCNN.predict_proba()` returns one probability per class for each input
